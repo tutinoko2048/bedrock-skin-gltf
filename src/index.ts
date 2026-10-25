@@ -1,7 +1,7 @@
 import { findGeometry, type Bone, type Geometry, type Vec3 } from './geometry.ts';
 import { addBufferView, addFloatAccessor, createBuilder, toGlb } from './glb.ts';
 import { addCube, addPolyMesh, toOut, toQuat, type Primitive } from './mesh.ts';
-import { HUMANOID_CUSTOM, HUMANOID_CUSTOM_SLIM } from './standard.ts';
+import { CAPE, HUMANOID_CUSTOM, HUMANOID_CUSTOM_SLIM } from './standard.ts';
 
 export { clientDataToGlb, type ClientData } from './client-data.ts';
 
@@ -16,6 +16,8 @@ export interface SkinInput {
   animatedImages?: Uint8Array[];
   /** geometryが見つからないときに使う標準スキンの体型 (`wide` / `slim`) */
   armSize?: string;
+  /** マントの画像 (PNG, 64x32) */
+  cape?: Uint8Array;
 }
 
 interface Layer {
@@ -135,22 +137,29 @@ function collectLayers(input: SkinInput): Layer[] {
       layers.push({ geometry, png: image.png });
     }
   }
-  if (layers.length > 0) return layers;
-  return [
-    {
+  if (layers.length === 0) {
+    layers.push({
       geometry: input.armSize === 'slim' ? HUMANOID_CUSTOM_SLIM : HUMANOID_CUSTOM,
       png: input.skin,
-    },
-  ];
+    });
+  }
+  if (input.cape) layers.push({ geometry: CAPE, png: input.cape });
+  return layers;
 }
 
-/** 全レイヤーのboneを名前 (大文字小文字は区別しない) でまとめる。先に出てきたものを使う */
+/**
+ * 全レイヤーのboneを名前 (大文字小文字は区別しない) でまとめる。
+ * 先に出てきたものを使うが、メッシュを持つboneがあればそちらを使う (スキンの空の`cape`よりマントの`cape`)
+ */
 function mergeBones(layers: Layer[]): Map<string, Bone> {
   const bones = new Map<string, Bone>();
+  const hasMesh = (bone: Bone | undefined) => !!(bone?.cubes?.length || bone?.poly_mesh);
   for (const layer of layers) {
     for (const bone of layer.geometry.bones) {
       const key = lower(bone.name);
-      if (key && !bones.has(key)) bones.set(key, bone);
+      if (!key) continue;
+      const current = bones.get(key);
+      if (!current || (!hasMesh(current) && hasMesh(bone))) bones.set(key, bone);
     }
   }
   return bones;

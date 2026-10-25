@@ -162,3 +162,20 @@ export const HUMANOID_CUSTOM_SLIM: Geometry = {
     },
   ],
 };
+
+/** マント (geometry.cape)。body基準で背中側に付く */
+export const CAPE: Geometry = {
+  textureWidth: 64,
+  textureHeight: 32,
+  bones: [
+    { name: 'body', parent: 'waist', pivot: [0, 24, 0] },
+    { name: 'waist', pivot: [0, 12, 0] },
+    {
+      name: 'cape',
+      parent: 'body',
+      pivot: [0, 24, 3],
+      rotation: [0, 180, 0],
+      cubes: [{ origin: [-5, 8, 3], size: [10, 16, 1], uv: [0, 0] }],
+    },
+  ],
+};

@@ -13,11 +13,20 @@ export interface ClientData {
   SkinResourcePatch?: string;
   ArmSize?: string;
   AnimatedImageData?: { Image: string; ImageWidth: number; ImageHeight: number }[];
+  /** マントのRGBAの生データ (base64)。マントが無ければ空 */
+  CapeData?: string;
+  CapeImageWidth?: number;
+  CapeImageHeight?: number;
 }
 
 /** client dataのclaimsをそのままGLBにする */
 export function clientDataToGlb(clientData: ClientData): Uint8Array {
+  const { CapeData, CapeImageWidth, CapeImageHeight } = clientData;
   return skinToGlb({
+    cape:
+      CapeData && CapeImageWidth && CapeImageHeight
+        ? rgbaToPng(CapeData, CapeImageWidth, CapeImageHeight)
+        : undefined,
     skin: rgbaToPng(clientData.SkinData, clientData.SkinImageWidth, clientData.SkinImageHeight),
     geometry: decodeJson(clientData.SkinGeometryData),
     resourcePatch: decodeJson(clientData.SkinResourcePatch),

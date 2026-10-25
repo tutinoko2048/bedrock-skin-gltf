@@ -15,6 +15,7 @@ const glb: Uint8Array = skinToGlb({
   resourcePatch: JSON.parse(skinResourcePatch), // SkinResourcePatch
   animatedImages: [personaPng], // AnimatedImageDataの画像 (PNG)
   armSize: 'wide', // geometryが無いときの標準スキンの体型 (wide / slim)
+  cape: capePng, // マントの画像 (PNG, 無ければ省略)
 });
 ```
 
@@ -33,6 +34,9 @@ const glb: Uint8Array = clientDataToGlb({
   SkinResourcePatch, // JSON (base64)
   ArmSize,
   AnimatedImageData, // [{ Image, ImageWidth, ImageHeight }]
+  CapeData, // RGBA (base64)。空ならマント無し
+  CapeImageWidth,
+  CapeImageHeight,
 });
 ```
 
@@ -58,11 +62,12 @@ resource patchの`default`はスキン画像、それ以外 (`animated_face`な�
 - boneの回転 (`rotation`)、`neverRender`
 - `poly_mesh` (ペルソナスキン)
 - geometryが無い標準スキン (`geometry.humanoid.custom` / `geometry.humanoid.customSlim`)
+- マント (`geometry.cape`。`body`の子の`cape`ノードとして背中側に付く。風でなびく傾きは付けない)
 
 ### 対応していないもの
 
 - 1.8.0形式の継承 (`geometry.foo:geometry.parent`) の親のbone
-- `bind_pose_rotation`、マント
+- `bind_pose_rotation`
 
 ## 開発
 

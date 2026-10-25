@@ -62,6 +62,7 @@ function readSkin(dir: string): SkinInput {
     resourcePatch: meta.skin_resource_patch,
     animatedImages,
     armSize: meta.arm_size,
+    cape: existsSync(join(dir, 'cape.png')) ? readFileSync(join(dir, 'cape.png')) : undefined,
   };
 }
 
@@ -99,8 +100,33 @@ function toClientData(input: SkinInput): ClientData {
       const image = rgba(png);
       return { Image: image.base64, ImageWidth: image.width, ImageHeight: image.height };
     }),
+    ...(input.cape && {
+      CapeData: rgba(input.cape).base64,
+      CapeImageWidth: rgba(input.cape).width,
+      CapeImageHeight: rgba(input.cape).height,
+    }),
   };
 }
+
+describe.skipIf(!existsSync(SKINS))('マント', () => {
+  test('bodyの背中側に付く', () => {
+    // ペルソナスキンのfixtureはマントあり
+    const gltf = parseGlb(skinToGlb(readSkin(join(SKINS, 'persona'))));
+    const cape = gltf.nodes.find((n) => n.name === 'cape') as Gltf['nodes'][number] & {
+      rotation?: number[];
+    };
+    expect(summarize(gltf).cape).toEqual({
+      parent: 'body',
+      translation: [0, 0, -3],
+      bounds: [
+        [-5, -16, -1],
+        [5, 0, 0],
+      ],
+    });
+    // Y軸周りに180°
+    expect(cape.rotation!.map((v) => Math.round(Math.abs(v) * 1e4) / 1e4)).toEqual([0, 1, 0, 0]);
+  });
+});
 
 describe.skipIf(!existsSync(SKINS))('client dataのclaimsから変換できる', () => {
   test.each([
