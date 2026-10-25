@@ -1,5 +1,5 @@
 import { encode } from 'fast-png';
-import { skinToGlb } from './index.ts';
+import { skinToGlb, type SkinInput } from './index.ts';
 
 /** Loginパケットのclient data JWTのclaimsのうち、スキンに関係するもの */
 export interface ClientData {
@@ -20,9 +20,13 @@ export interface ClientData {
 }
 
 /** client dataのclaimsをそのままGLBにする */
-export function clientDataToGlb(clientData: ClientData): Uint8Array {
+export function clientDataToGlb(
+  clientData: ClientData,
+  options: Pick<SkinInput, 'capeAngle'> = {},
+): Uint8Array {
   const { CapeData, CapeImageWidth, CapeImageHeight } = clientData;
   return skinToGlb({
+    ...options,
     cape:
       CapeData && CapeImageWidth && CapeImageHeight
         ? rgbaToPng(CapeData, CapeImageWidth, CapeImageHeight)

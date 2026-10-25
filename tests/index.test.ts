@@ -109,13 +109,19 @@ function toClientData(input: SkinInput): ClientData {
 }
 
 describe.skipIf(!existsSync(SKINS))('マント', () => {
-  test('bodyの背中側に付く', () => {
-    // ペルソナスキンのfixtureはマントあり
-    const gltf = parseGlb(skinToGlb(readSkin(join(SKINS, 'persona'))));
-    const cape = gltf.nodes.find((n) => n.name === 'cape') as Gltf['nodes'][number] & {
-      rotation?: number[];
+  // ペルソナスキンのfixtureはマントあり
+  const capeOf = (capeAngle?: number) => {
+    const gltf = parseGlb(skinToGlb({ ...readSkin(join(SKINS, 'persona')), capeAngle }));
+    const node = gltf.nodes.find((n) => n.name === 'cape') as Gltf['nodes'][number] & {
+      rotation: [number, number, number, number];
     };
-    expect(summarize(gltf).cape).toEqual({
+    // 裾の中央 (pivotからの位置)
+    const [x, y, z] = rotate([0, -16, 0], node.rotation);
+    return { summary: summarize(gltf).cape, hem: { x, y, z } };
+  };
+
+  test('bodyの背中側に付く', () => {
+    expect(capeOf(0).summary).toEqual({
       parent: 'body',
       translation: [0, 0, -3],
       bounds: [
@@ -123,10 +129,31 @@ describe.skipIf(!existsSync(SKINS))('マント', () => {
         [5, 0, 0],
       ],
     });
-    // Y軸周りに180°
-    expect(cape.rotation!.map((v) => Math.round(Math.abs(v) * 1e4) / 1e4)).toEqual([0, 1, 0, 0]);
+    expect(capeOf(0).hem.z).toBeCloseTo(0);
+  });
+
+  test('裾が後ろ (-Z) に傾く', () => {
+    for (const angle of [6, 30]) {
+      const { hem } = capeOf(angle);
+      expect(hem.x).toBeCloseTo(0);
+      expect(hem.z).toBeLessThan(0);
+      expect((Math.atan2(-hem.z, -hem.y) * 180) / Math.PI).toBeCloseTo(angle);
+    }
+    // 指定しなければ6°
+    expect(capeOf().hem).toEqual(capeOf(6).hem);
   });
 });
+
+function rotate([x, y, z]: number[], [qx, qy, qz, qw]: number[]) {
+  const tx = 2 * (qy! * z! - qz! * y!);
+  const ty = 2 * (qz! * x! - qx! * z!);
+  const tz = 2 * (qx! * y! - qy! * x!);
+  return [
+    x! + qw! * tx + (qy! * tz - qz! * ty),
+    y! + qw! * ty + (qz! * tx - qx! * tz),
+    z! + qw! * tz + (qx! * ty - qy! * tx),
+  ];
+}
 
 describe.skipIf(!existsSync(SKINS))('client dataのclaimsから変換できる', () => {
   test.each([

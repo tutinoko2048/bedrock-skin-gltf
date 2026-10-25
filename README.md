@@ -16,6 +16,7 @@ const glb: Uint8Array = skinToGlb({
   animatedImages: [personaPng], // AnimatedImageDataの画像 (PNG)
   armSize: 'wide', // geometryが無いときの標準スキンの体型 (wide / slim)
   cape: capePng, // マントの画像 (PNG, 無ければ省略)
+  capeAngle: 6, // マントの裾を後ろに傾ける角度 (度, 省略すると6。0でまっすぐ)
 });
 ```
 
@@ -40,7 +41,7 @@ const glb: Uint8Array = clientDataToGlb({
 });
 ```
 
-claimsの他のkeyが入っていても無視する。
+claimsの他のkeyが入っていても無視する。マントの傾きは2つ目の引数で指定する (`clientDataToGlb(claims, { capeAngle: 10 })`)。
 
 ## 出力の形
 
@@ -62,7 +63,7 @@ resource patchの`default`はスキン画像、それ以外 (`animated_face`な�
 - boneの回転 (`rotation`)、`neverRender`
 - `poly_mesh` (ペルソナスキン)
 - geometryが無い標準スキン (`geometry.humanoid.custom` / `geometry.humanoid.customSlim`)
-- マント (`geometry.cape`。`body`の子の`cape`ノードとして背中側に付く。風でなびく傾きは付けない)
+- マント (`geometry.cape`。`body`の子の`cape`ノードとして背中側に付く。裾の傾きは`capeAngle`で指定)
 
 ### 対応していないもの
 

@@ -18,7 +18,12 @@ export interface SkinInput {
   armSize?: string;
   /** マントの画像 (PNG, 64x32) */
   cape?: Uint8Array;
+  /** マントの裾を後ろに傾ける角度 (度)。0でまっすぐ垂れる */
+  capeAngle?: number;
 }
+
+/** 立っているときのマントの傾き (Java版の静止時と同じ) */
+const DEFAULT_CAPE_ANGLE = 6;
 
 interface Layer {
   geometry: Geometry;
@@ -143,7 +148,14 @@ function collectLayers(input: SkinInput): Layer[] {
       png: input.skin,
     });
   }
-  if (input.cape) layers.push({ geometry: CAPE, png: input.cape });
+  if (input.cape) {
+    // Bedrockのマントのアニメーションと同じく、X軸の負の回転で裾が後ろに上がる
+    const angle = input.capeAngle ?? DEFAULT_CAPE_ANGLE;
+    const bones = CAPE.bones.map((b) =>
+      b.name === 'cape' ? { ...b, rotation: [-angle, 180, 0] as Vec3 } : b,
+    );
+    layers.push({ geometry: { ...CAPE, bones }, png: input.cape });
+  }
   return layers;
 }
 
