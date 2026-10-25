@@ -1,6 +1,6 @@
 {
   "name": "bedrock-skin-gltf",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Convert Minecraft Bedrock skins (geometry + texture) to glTF in the same shape as the Persona API",
   "keywords": [
     "bedrock",
